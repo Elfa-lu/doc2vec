@@ -240,7 +240,13 @@ def shannon_entropy_train(revs):
     # categories = revs_df["y"].unique()
 
     for x_value in vocab:
-        revs_x_df = revs_df[revs_df["sentence"].str.contains(x_value)]
+        x_value_idx = []
+        for index, row in revs_df.iterrows():
+            text = row['sentence']
+            if x_value in text.split(" "):
+                x_value_idx.append(index)
+
+        revs_x_df = revs_df.filter(items=x_value_idx, axis=0)
         probs = revs_x_df["y"].value_counts(normalize=True)
         se = -1 * np.sum(np.log2(probs) * probs)
         hx[x_value] = se
@@ -455,7 +461,7 @@ if __name__ == "__main__":
     #         train_model(dataset, algorithm)
 
     datasets_dev = ["trec"]  # "sst2", "sst1", "trec"
-    algorithms = ["ig", "se"]
+    algorithms = ["se"]
     for dataset in datasets_dev:
         for algorithm in algorithms:
             print("======= training {} dataset by using w2v_glove {} =======".format(dataset, algorithm), flush=True)
