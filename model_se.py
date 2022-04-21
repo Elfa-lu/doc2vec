@@ -375,7 +375,9 @@ def get_doc_vec_multi_info_test(dataset, algorithm, revs, hx, W, word_idx_map, W
 
         sum_hx_weights = sum(hx_weights)
         if sum(hx_weights) == 0:
-            print(hx_weights, text)
+            doc_embedding.append(doc_embedding[-1])
+            continue
+        
         embedding_w2v_ = sum(embedding_w2v_hx) / sum_hx_weights
         embedding_glove_ = sum(embedding_glove_hx) / sum_hx_weights
         embedding = [*embedding_w2v_, *embedding_glove_]
