@@ -1,9 +1,6 @@
 from collections import defaultdict
-from unicodedata import category
 from utils import *
 import h5py
-import math
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.svm import SVC
 import numpy as np
@@ -236,41 +233,42 @@ def get_train_vocab(revs):
 
 
 def shannon_entropy_train(revs):
-    # vocab = get_train_vocab(revs)
-    # hx = dict.fromkeys(vocab, 0)
-    
-    # revs_df = create_revs_df(revs)
-    # # categories = revs_df["y"].unique()
-
-    # for x_value in vocab:
-    #     revs_x_df = revs_df[revs_df["sentence"].str.contains(x_value)]
-    #     probs = revs_x_df["y"].value_counts(normalize=True)
-    #     se = -1 * np.sum(np.log2(probs) * probs)
-    #     hx[x_value] = se
     vocab = get_train_vocab(revs)
-    dict_neg = dict.fromkeys(vocab, 0)
+    hx = dict.fromkeys(vocab, 0)
+    
+    revs_df = create_revs_df(revs)
+    # categories = revs_df["y"].unique()
 
-    for sentence in revs:
-        text = sentence["text"]
-        words = text.split(" ")
-        label = sentence["y"]
-        if label:
-            for word in set(words):
-                dict_neg[word] += 1
+    for x_value in vocab:
+        revs_x_df = revs_df[revs_df["sentence"].str.contains(x_value)]
+        probs = revs_x_df["y"].value_counts(normalize=True)
+        se = -1 * np.sum(np.log2(probs) * probs)
+        hx[x_value] = se
+        
+    # vocab = get_train_vocab(revs)
+    # dict_neg = dict.fromkeys(vocab, 0)
 
-    prob_dict_neg = {k: dict_neg[k] / vocab[k] for k in vocab}
+    # for sentence in revs:
+    #     text = sentence["text"]
+    #     words = text.split(" ")
+    #     label = sentence["y"]
+    #     if label:
+    #         for word in set(words):
+    #             dict_neg[word] += 1
 
-    hx = defaultdict(float)
-    for k in vocab:
-        if prob_dict_neg[k] == 1 or prob_dict_neg[k] == 0:
-            # hx[k] = 2.5
-            hx[k] = 0
-        else:
-            hx[k] = -prob_dict_neg[k] * (math.log(prob_dict_neg[k], 2)) - (1 - prob_dict_neg[k]) * (math.log((1 - prob_dict_neg[k]), 2))
+    # prob_dict_neg = {k: dict_neg[k] / vocab[k] for k in vocab}
+
+    # hx = defaultdict(float)
+    # for k in vocab:
+    #     if prob_dict_neg[k] == 1 or prob_dict_neg[k] == 0:
+    #         # hx[k] = 2.5
+    #         hx[k] = 0
+    #     else:
+    #         hx[k] = -prob_dict_neg[k] * (math.log(prob_dict_neg[k], 2)) - (1 - prob_dict_neg[k]) * (math.log((1 - prob_dict_neg[k]), 2))
 
     # hx = {k: abs(hx[k] - 1) + 1 for k in hx}
     hx = {k: abs(hx[k] - 1) for k in hx}
-    
+
     return hx
 
 
@@ -297,6 +295,11 @@ def get_doc_vec_multi_info(dataset, algorithm, revs, W, word_idx_map, W_glove, w
                 embedding_glove = [W_glove[word_idx_map_glove[word]] * hx[word] for word in text.split(" ")]
 
         # print([hx[word] for word in text.split(" ")])
+        # for those got prob(x|true) == prob(x|false) == 1/2, se == 0, sum(hx_weights) is 0
+        if hx_weights == 0:
+            doc_embedding.append(doc_embedding[-1])
+            continue
+
         embedding_w2v_ = sum(embedding_w2v) / hx_weights
         embedding_glove_ = sum(embedding_glove) / hx_weights
         embedding = [*embedding_w2v_, *embedding_glove_]
@@ -431,7 +434,7 @@ def information_gain_train(revs):
 
 
 if __name__ == "__main__":
-    datasets = ["cr"] # [ "rt", "cr", "mpqa", "subj"]
+    datasets = ["mpqa"] # [ "rt", "cr", "mpqa", "subj"]
     algorithms = ["ig", "se"]
     for dataset in datasets:
         for algorithm in algorithms:
