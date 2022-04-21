@@ -127,7 +127,7 @@ def train_model_has_dev_set(dataset, algorithm="se", random_state=0, cv=10):
         file_name = dataset.upper() + ".hdf5"
         f = h5py.File(file_name, "r")
         train_size = f["train_label"].shape[0]
-        dev_size = f["dev_label"].shape[0]
+        dev_size = f["test_label"].shape[0]
 
         random.seed(random_state)
         idx = [*range(train_size)]
@@ -143,9 +143,9 @@ def train_model_has_dev_set(dataset, algorithm="se", random_state=0, cv=10):
         X_test = get_doc_vec_multi_info_test(dataset, algorithm, revs[train_size:], hx_, W, word_idx_map, W_glove, word_idx_map_glove)
         
         target = [rev["y"] for rev in revs]
-        y_train_ = target[:train_size]
         y_train = [element for i, element in enumerate(target) if i in idx_train]
         y_dev = [element for i, element in enumerate(target) if i in idx_dev]
+        y_train_ = y_train + y_dev
         y_test = target[train_size:]
 
     train_size = len(y_train)
