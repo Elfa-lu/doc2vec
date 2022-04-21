@@ -359,17 +359,23 @@ def get_doc_vec_multi_info_test(dataset, algorithm, revs, hx, W, word_idx_map, W
 
         if dataset == "sst1" or dataset == "sst2" or dataset == "trec":
             embedding_w2v = [W[word_idx_map[word] - 1] for word in text.split(" ")]
-            embedding_w2v_hx = [a * b for a, b in zip(hx_weights, embedding_w2v)]
+            embedding_w2v_hx = [np.array(embedding_w2v[i]) * np.array(hx_weights[i]) for i in range(len(embedding_w2v))]
+            # embedding_w2v_hx = [a * b for a, b in zip(hx_weights, embedding_w2v)]
             embedding_glove = [W_glove[word_idx_map_glove[word] - 1] for word in text.split(" ")]
-            embedding_glove_hx = [a * b for a, b in zip(hx_weights, embedding_glove)]
+            embedding_glove_hx = [np.array(embedding_glove[i]) * np.array(hx_weights[i]) for i in range(len(embedding_glove))]
+            # embedding_glove_hx = [a * b for a, b in zip(hx_weights, embedding_glove)]
         
         else:
             embedding_w2v = [W[word_idx_map[word]] for word in text.split(" ")]
-            embedding_w2v_hx = [a * b for a, b in zip(hx_weights, embedding_w2v)]
+            embedding_w2v_hx = [np.array(embedding_w2v[i]) * np.array(hx_weights[i]) for i in range(len(embedding_w2v))]
+            # embedding_w2v_hx = [a * b for a, b in zip(hx_weights, embedding_w2v)]
             embedding_glove = [W_glove[word_idx_map_glove[word]] for word in text.split(" ")]
-            embedding_glove_hx = [a * b for a, b in zip(hx_weights, embedding_glove)]
+            embedding_glove_hx = [np.array(embedding_glove[i]) * np.array(hx_weights[i]) for i in range(len(embedding_glove))]
+            # embedding_glove_hx = [a * b for a, b in zip(hx_weights, embedding_glove)]
 
         sum_hx_weights = sum(hx_weights)
+        if sum(hx_weights) == 0:
+            print(hx_weights, text)
         embedding_w2v_ = sum(embedding_w2v_hx) / sum_hx_weights
         embedding_glove_ = sum(embedding_glove_hx) / sum_hx_weights
         embedding = [*embedding_w2v_, *embedding_glove_]
@@ -423,8 +429,8 @@ def information_gain_train(revs):
 
 
 if __name__ == "__main__":
-    datasets = ["rt"] # [ "rt", "cr", "mpqa", "subj"]
-    algorithms = ["ig"]
+    datasets = ["cr"] # [ "rt", "cr", "mpqa", "subj"]
+    algorithms = ["ig", "se"]
     for dataset in datasets:
         for algorithm in algorithms:
             print("======= training {} dataset by using w2v_glove {} =======".format(dataset, algorithm), flush=True)
