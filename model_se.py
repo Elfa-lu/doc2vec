@@ -137,7 +137,7 @@ def train_model_has_dev_set(dataset, algorithm="se", random_state=0, cv=10):
         revs_train = [element for i, element in enumerate(revs) if i in idx_train]
         revs_dev = [element for i, element in enumerate(revs) if i in idx_dev]
 
-        X_train_, hx_ = get_doc_vec_multi_info(dataset, algorithm, pd.concat([revs_train, revs_dev], ignore_index=True), W, word_idx_map, W_glove, word_idx_map_glove)
+        X_train_, hx_ = get_doc_vec_multi_info(dataset, algorithm, revs_train + revs_dev, W, word_idx_map, W_glove, word_idx_map_glove)
         X_train, hx = get_doc_vec_multi_info(dataset, algorithm, revs_train, W, word_idx_map, W_glove, word_idx_map_glove)
         X_dev = get_doc_vec_multi_info_test(dataset, algorithm, revs_dev, hx, W, word_idx_map, W_glove, word_idx_map_glove)
         X_test = get_doc_vec_multi_info_test(dataset, algorithm, revs[train_size:], hx_, W, word_idx_map, W_glove, word_idx_map_glove)
@@ -421,10 +421,22 @@ def information_gain_train(revs):
     entropy_y = cal_impurity(revs_df["y"])
     ig = dict.fromkeys(vocab, 0)
     for x_value in ig:
-        revs_x_df = revs_df[revs_df['sentence'].str.contains(x_value)]
+        # revs_x_df = revs_df[revs_df['sentence'].str.contains(x_value)]
+        x_value_idx = []
+        not_x_value_idx = []
+        for index, row in revs_df.iterrows():
+            text = row['sentence']
+            if x_value in text.split(" "):
+                x_value_idx.append(index)
+            else:
+                not_x_value_idx.append(index)
+
+        revs_x_df = revs_df.filter(items=x_value_idx, axis=0)
+
         conditional_entropy_x = cal_impurity(revs_x_df["y"])
         prob_x = len(revs_x_df) / len(revs_df)
-        revs_not_x_df = revs_df[~revs_df['sentence'].str.contains(x_value)]
+        # revs_not_x_df = revs_df[~revs_df['sentence'].str.contains(x_value)]
+        revs_not_x_df = revs_df.filter(items=not_x_value_idx, axis=0)
         conditional_entropy_not_x = cal_impurity(revs_not_x_df["y"])
         prob_not_x = 1 - prob_x
         ig[x_value] = entropy_y - prob_x * conditional_entropy_x - prob_not_x * conditional_entropy_not_x
@@ -434,13 +446,13 @@ def information_gain_train(revs):
 
 
 if __name__ == "__main__":
-    datasets = ["mpqa"] # [ "rt", "cr", "mpqa", "subj"]
-    algorithms = ["ig", "se"]
-    for dataset in datasets:
-        for algorithm in algorithms:
-            print("======= training {} dataset by using w2v_glove {} =======".format(dataset, algorithm), flush=True)
-            print(flush=True)
-            train_model(dataset, algorithm)
+    # datasets = ["mpqa"] # [ "rt", "cr", "mpqa", "subj"]
+    # algorithms = ["ig", "se"]
+    # for dataset in datasets:
+    #     for algorithm in algorithms:
+    #         print("======= training {} dataset by using w2v_glove {} =======".format(dataset, algorithm), flush=True)
+    #         print(flush=True)
+    #         train_model(dataset, algorithm)
 
     datasets_dev = ["trec"]  # "sst2", "sst1", "trec"
     algorithms = ["ig", "se"]
