@@ -3,9 +3,10 @@ import h5py
 import re
 import operator
 import argparse
+import io
 
 
-################## FOR SST DATASET ##################
+################## FOR DATASET WITH DEV/TEST SET ##################
 
 def load_bin_vec(fname, vocab):
     """
@@ -45,6 +46,36 @@ def loan_bin_vec_glove(fname, vocab):
                 embedding = np.array(split_line[-300:], dtype=np.float64)
                 word_vecs[word] = embedding
     return word_vecs
+
+
+def loan_bin_vec_fasttext_wiki(fname, vocab):
+    """
+    Loads 300x1 word vecs from FastText wiki-news-300d-1M.vec.zip
+    """
+    fin = io.open(fname, 'r', encoding='utf-8', newline='\n', errors='ignore')
+    n, d = map(int, fin.readline().split())
+    data = {}
+    for line in fin:
+        tokens = line.rstrip().split(' ')
+        word = tokens[0]
+        if word in vocab:
+            data[word] = np.array(tokens[1:], dtype=np.float64)
+    return data
+
+
+def loan_bin_vec_fasttext_crawl(fname, vocab):
+    """
+    Loads 300x1 word vecs from FastText crawl-300d-2M.vec.zip
+    """
+    fin = io.open(fname, 'r', encoding='utf-8', newline='\n', errors='ignore')
+    n, d = map(int, fin.readline().split())
+    data = {}
+    for line in fin:
+        tokens = line.rstrip().split(' ')
+        word = tokens[0]
+        if word in vocab:
+            data[word] = np.array(tokens[1:], dtype=np.float64)
+    return data
 
 
 def line_to_words(line, dataset):
@@ -204,6 +235,8 @@ def main():
     parser.add_argument("dataset", help="Data set", type=str)
     parser.add_argument("w2v", help="word2vec file", type=str)
     parser.add_argument("glove", help="glove file", type=str)
+    parser.add_argument("fasttext_wiki", help="fasttext wiki file", type=str)
+    parser.add_argument("fasttext_crawl", help="fasttext crawl file", type=str)
     parser.add_argument("--train", help="custom train data", type=str, default="")
     parser.add_argument("--test", help="custom test data", type=str, default="")
     parser.add_argument("--dev", help="custom dev data", type=str, default="")
@@ -261,12 +294,28 @@ def main():
     for word, vec in glove.items():
         embed_glove[word_to_idx[word] - 1] = vec
 
+    # Load fasttext wiki
+    fasttext_wiki = loan_bin_vec_fasttext_wiki(args.fasttext_wiki, word_to_idx)
+    embed_ft_wiki = np.random.uniform(-0.25, 0.25, (V, len(list(fasttext_wiki.values())[0])))
+    embed_ft_wiki[0] = 0
+    for word, vec in fasttext_wiki.items():
+        embed_ft_wiki[word_to_idx[word] - 1] = vec
+
+    # Load fasttext crawl
+    fasttext_crawl = loan_bin_vec_fasttext_crawl(args.fasttext_crawl, word_to_idx)
+    embed_ft_crawl = np.random.uniform(-0.25, 0.25, (V, len(list(fasttext_crawl.values())[0])))
+    embed_ft_crawl[0] = 0
+    for word, vec in fasttext_crawl.items():
+        embed_ft_crawl[word_to_idx[word] - 1] = vec
+
     print("train size:", train.shape)
 
     filename = dataset + ".hdf5"
     with h5py.File(filename, "w") as f:
         f["w2v"] = np.array(embed)
         f["glove"] = np.array(embed_glove)
+        f["ft_wiki"] = np.array(embed_ft_wiki)
+        f["ft_crawl"] = np.array(embed_ft_crawl)
         f["train"] = train
         f["train_label"] = train_label
         f["test"] = test
@@ -277,7 +326,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # python preprocess.py SST1 ../GoogleNews-vectors-negative300.bin ../glove.840B.300d.txt
-    # python preprocess.py SST2 ../GoogleNews-vectors-negative300.bin ../glove.840B.300d.txt
-    # python preprocess.py TREC ../GoogleNews-vectors-negative300.bin ../glove.840B.300d.txt
+    # python preprocess.py SST1 ../GoogleNews-vectors-negative300.bin ../glove.840B.300d.txt ../wiki-news-300d-1M.vec ../crawl-300d-2M.vec
+    # python preprocess.py SST2 ../GoogleNews-vectors-negative300.bin ../glove.840B.300d.txt ../wiki-news-300d-1M.vec ../crawl-300d-2M.vec
+    # python preprocess.py TREC ../GoogleNews-vectors-negative300.bin ../glove.840B.300d.txt ../wiki-news-300d-1M.vec ../crawl-300d-2M.vec
     

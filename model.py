@@ -19,9 +19,9 @@ import time
 
 def get_data(dataset="rt", algorithm="w2vMean"):
     if dataset == "sst1" or dataset == "sst2" or dataset == "trec":
-        revs, W,  _, word_idx_map, vocab, W_glove, word_idx_map_glove = load_preprocessed_data_sst(dataset)
+        revs, W,  _, word_idx_map, vocab, W_glove, word_idx_map_glove, W_ft_wiki, word_idx_map_ft_wiki, W_ft_crawl, word_idx_map_ft_crawl = load_preprocessed_data_sst(dataset)
     else:
-        revs, W,  _, word_idx_map, vocab, W_glove, word_idx_map_glove = load_preprocessed_data(dataset)
+        revs, W,  _, word_idx_map, vocab, W_glove, word_idx_map_glove, W_ft_wiki, word_idx_map_ft_wiki, W_ft_crawl, word_idx_map_ft_crawl = load_preprocessed_data(dataset)
     target = [rev["y"] for rev in revs]
 
     if algorithm == "w2vMean":
@@ -36,9 +36,18 @@ def get_data(dataset="rt", algorithm="w2vMean"):
         df_feature = get_doc_vec_tfidf(revs, word_idx_map, vocab)
     elif algorithm == "glove":
         df_feature = get_doc_vec_options(dataset, revs, W_glove, word_idx_map_glove, option="mean")
+    elif algorithm == "fasttext_wiki":
+        df_feature = get_doc_vec_options(dataset, revs, W_ft_wiki, word_idx_map_ft_wiki, option="mean")
+    elif algorithm == "fasttext_crawl":
+        df_feature = get_doc_vec_options(dataset, revs, W_ft_crawl, word_idx_map_ft_crawl, option="mean")
     elif algorithm == "w2v_glove":
         df_feature = get_doc_vec_multi(dataset, revs, W, word_idx_map, W_glove, word_idx_map_glove)
-
+    elif algorithm == "glove_w2v_ft":
+        df_feature = get_doc_vec_multi(dataset, revs, W, word_idx_map, W_glove, word_idx_map_glove, W_ft_crawl, word_idx_map_ft_crawl)
+    elif algorithm == "glove_ft":
+        df_feature = get_doc_vec_multi(dataset, revs, W_ft_crawl, word_idx_map_ft_crawl, W_glove, word_idx_map_glove)
+    elif algorithm == "w2v_ft":
+        df_feature = get_doc_vec_multi(dataset, revs, W, word_idx_map, W_ft_crawl, word_idx_map_ft_crawl)
     # lsa_feature = add_lsa_features(revs)
     # print(lsa_feature)
 
@@ -198,7 +207,7 @@ def train_model_has_dev_set(dataset, algorithm, random_state=0, cv=10):
         file_name = dataset.upper() + ".hdf5"
         f = h5py.File(file_name, "r")
         train_size = f["train_label"].shape[0]
-        dev_size = f["dev_label"].shape[0]
+        dev_size = f["test_label"].shape[0]
 
         df = get_data(dataset, algorithm)
         X = df[df.columns.difference(["target"])]
@@ -275,8 +284,10 @@ def train_model_has_dev_set(dataset, algorithm, random_state=0, cv=10):
 
 
 if __name__ == "__main__":
+    # "w2vMean", "w2vMin", "w2vMax", "bow", "tfidf", "w2v_glove", "glove", "se", "ig", 
+    # "fasttext_wiki", "fasttext_crawl", "glove_w2v_ft", "glove_ft", "w2v_ft"
     # datasets = ["rt"] # [ "rt", "cr", "mpqa", "subj"]
-    # algorithms = ["w2v_glove", "glove"]  # "w2vMin", "w2vMax"
+    # algorithms = ["glove_w2v_ft", "glove_ft", "w2v_ft", "fasttext_wiki", "fasttext_crawl"]  
     # for dataset in datasets:
     #     for algorithm in algorithms:
     #         print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
@@ -284,7 +295,7 @@ if __name__ == "__main__":
     #         train_model(dataset, algorithm)
 
     datasets_dev = ["trec"]  # "sst2", "sst1", "trec" 
-    algorithms_dev = ["w2v_glove"] # ["w2v_glove", "glove", "w2vMean", "bow", "tfidf"]
+    algorithms_dev = ["glove_w2v_ft", "glove_ft", "w2v_ft", "fasttext_wiki", "fasttext_crawl"] # ["w2v_glove", "glove", "w2vMean", "bow", "tfidf"]
     for dataset in datasets_dev:
         for algorithm in algorithms_dev:
             print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)

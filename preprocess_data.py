@@ -12,6 +12,7 @@ from collections import defaultdict
 import re
 import pandas as pd
 import os
+import io
 
 
 def build_data_cv(data_folder, cv=10, clean_string=True):
@@ -94,6 +95,36 @@ def get_W(word_vecs, k=300):
         word_idx_map[word] = i
         i += 1
     return W, word_idx_map
+
+
+def loan_bin_vec_fasttext_wiki(fname, vocab):
+    """
+    Loads 300x1 word vecs from FastText wiki-news-300d-1M.vec.zip
+    """
+    fin = io.open(fname, 'r', encoding='utf-8', newline='\n', errors='ignore')
+    n, d = map(int, fin.readline().split())
+    data = {}
+    for line in fin:
+        tokens = line.rstrip().split(' ')
+        word = tokens[0]
+        if word in vocab:
+            data[word] = np.array(tokens[1:], dtype=np.float64)
+    return data
+
+
+def loan_bin_vec_fasttext_crawl(fname, vocab):
+    """
+    Loads 300x1 word vecs from FastText crawl-300d-2M.vec.zip
+    """
+    fin = io.open(fname, 'r', encoding='utf-8', newline='\n', errors='ignore')
+    n, d = map(int, fin.readline().split())
+    data = {}
+    for line in fin:
+        tokens = line.rstrip().split(' ')
+        word = tokens[0]
+        if word in vocab:
+            data[word] = np.array(tokens[1:], dtype=np.float64)
+    return data
 
 
 def loan_bin_vec_glove(fname, vocab):
@@ -211,12 +242,30 @@ if __name__ == "__main__":
         # load glove 300d
         # Common Crawl (840B tokens, 2.2M vocab, cased, 300d vectors)
         glove_file = os.path.join(parent_dir, "glove.840B.300d.txt")
-        print("loading word2vec vectors...")
+        print("loading glove vectors...")
         glove = loan_bin_vec_glove(glove_file, vocab)
         print("glove loaded!")
         print("num words already in glove: " + str(len(glove)))
         add_unknown_words(glove, vocab)
         W_glove, word_idx_map_glove = get_W(glove)
+
+        # load fasttext wiki
+        ft_wiki_file = os.path.join(parent_dir, "wiki-news-300d-1M.vec")
+        print("loading fasttext wiki vectors...")
+        ft_wiki = loan_bin_vec_fasttext_wiki(ft_wiki_file, vocab)
+        print("fasttext wiki loaded!")
+        print("num words already in fasttext wiki: " + str(len(ft_wiki)))
+        add_unknown_words(ft_wiki, vocab)
+        W_ft_wiki, word_idx_map_ft_wiki = get_W(ft_wiki)
+
+        # load fasttext crawl
+        ft_crawl_file = os.path.join(parent_dir, "crawl-300d-2M.vec")
+        print("loading fasttext crawl vectors...")
+        ft_crawl = loan_bin_vec_glove(ft_crawl_file, vocab)
+        print("fasttext crawl loaded!")
+        print("num words already in fasttext crawl: " + str(len(ft_crawl)))
+        add_unknown_words(ft_crawl, vocab)
+        W_ft_crawl, word_idx_map_ft_crawl = get_W(ft_crawl)
 
         rand_vecs = {}
         add_unknown_words(rand_vecs, vocab)
@@ -224,7 +273,12 @@ if __name__ == "__main__":
 
         file_name = dataset + ".p"
         cPickle.dump(
-            [revs, W, W2, word_idx_map, vocab, W_glove, word_idx_map_glove],
+            [
+                revs, W, W2, word_idx_map, vocab, 
+                W_glove, word_idx_map_glove, 
+                W_ft_wiki, word_idx_map_ft_wiki, 
+                W_ft_crawl, word_idx_map_ft_crawl
+            ],
             open(file_name, "wb"),
         )
         print("dataset created!")

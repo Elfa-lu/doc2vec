@@ -16,6 +16,8 @@ def load_preprocessed_data_sst(dataset="sst1", k=300):
     train_label = np.array(f["train_label"])
     W = np.array(f["w2v"])
     W_glove = np.array(f["glove"])
+    W_ft_wiki = np.array(f["ft_wiki"])
+    W_ft_crawl = np.array(f["ft_crawl"])
 
     if dataset == "trec":
         data = np.concatenate((train, test), axis=0)
@@ -62,7 +64,7 @@ def load_preprocessed_data_sst(dataset="sst1", k=300):
     for i in range(1, vocab_size + 1):
         W2[i] = np.random.uniform(-0.25, 0.25, k)
 
-    return revs, W, W2, word_idx_map, vocab, W_glove, word_idx_map
+    return revs, W, W2, word_idx_map, vocab, W_glove, word_idx_map, W_ft_wiki, word_idx_map, W_ft_crawl, word_idx_map
 
 
 def load_preprocessed_data(dataset="rt"):
@@ -77,10 +79,10 @@ def load_preprocessed_data(dataset="rt"):
         word counts, len() = 18778
     """
     filename = dataset.lower() + ".p"
-    revs, W, W2, word_idx_map, vocab, W_glove, word_idx_map_glove = cPickle.load(
+    revs, W, W2, word_idx_map, vocab, W_glove, word_idx_map_glove, W_ft_wiki, word_idx_map_ft_wiki, W_ft_crawl, word_idx_map_ft_crawl = cPickle.load(
         open(filename, "rb")
     )
-    return revs, W, W2, word_idx_map, vocab, W_glove, word_idx_map_glove
+    return revs, W, W2, word_idx_map, vocab, W_glove, word_idx_map_glove, W_ft_wiki, word_idx_map_ft_wiki, W_ft_crawl, word_idx_map_ft_crawl
 
 
 def get_doc_vec_options(dataset, revs, W, word_idx_map, option="mean"):
@@ -120,28 +122,67 @@ def get_doc_vec_options(dataset, revs, W, word_idx_map, option="mean"):
     return doc_embedding
 
 
-def get_doc_vec_multi(dataset, revs, W, word_idx_map, W_glove, word_idx_map_glove):
+def get_doc_vec_multi(dataset, revs, W_1, word_idx_map_1, W_2, word_idx_map_2, W_3=None, word_idx_map_3=None):
     doc_embedding = []
 
     for sentence in revs:
         text = sentence["text"]
         numwords = sentence["num_words"]
+
+        if len(text) == 0 and W_3 is None:
+            doc_embedding.append(np.random.uniform(-0.25, 0.25, 900))
+            continue
+
+        if len(text) == 0 and not W_3 is None:
+            doc_embedding.append(np.random.uniform(-0.25, 0.25, 600))
+            continue
         
         if dataset == "sst1" or dataset == "sst2" or dataset == "trec":
-            if len(text) > 0:
-                embedding_w2v = [W[word_idx_map[word] - 1] for word in text.split(" ")]
-                embedding_glove = [W_glove[word_idx_map_glove[word] - 1] for word in text.split(" ")]
+            embedding_1 = [W_1[word_idx_map_1[word] - 1] for word in text.split(" ")]
+            embedding_2 = [W_2[word_idx_map_2[word] - 1] for word in text.split(" ")]
+            if W_3 is not None:
+                embedding_3 = [W_3[word_idx_map_3[word] - 1] for word in text.split(" ")]
         else:
-            if len(text) > 0:
-                embedding_w2v = [W[word_idx_map[word]] for word in text.split(" ")]
-                embedding_glove = [W_glove[word_idx_map_glove[word]] for word in text.split(" ")]
+            embedding_1 = [W_1[word_idx_map_1[word]] for word in text.split(" ")]
+            embedding_2 = [W_2[word_idx_map_2[word]] for word in text.split(" ")]
+            if W_3 is not None:
+                embedding_3 = [W_3[word_idx_map_3[word] - 1] for word in text.split(" ")]
 
-        embedding_w2v_ = sum(embedding_w2v) / numwords
-        embedding_glove_ = sum(embedding_glove) / numwords
-        embedding = [*embedding_w2v_, *embedding_glove_]
+        embedding_1_ = sum(embedding_1) / numwords
+        embedding_2_ = sum(embedding_2) / numwords
+        if W_3 is None:
+            embedding = [*embedding_1_, *embedding_2_]
+        else:
+            embedding_3_ = sum(embedding_3) / numwords
+            embedding = [*embedding_1_, *embedding_2_, *embedding_3_]
+            
         doc_embedding.append(embedding)
 
     return doc_embedding
+
+
+# def get_doc_vec_multi(dataset, revs, W, word_idx_map, W_glove, word_idx_map_glove):
+#     doc_embedding = []
+
+#     for sentence in revs:
+#         text = sentence["text"]
+#         numwords = sentence["num_words"]
+        
+#         if dataset == "sst1" or dataset == "sst2" or dataset == "trec":
+#             if len(text) > 0:
+#                 embedding_w2v = [W[word_idx_map[word] - 1] for word in text.split(" ")]
+#                 embedding_glove = [W_glove[word_idx_map_glove[word] - 1] for word in text.split(" ")]
+#         else:
+#             if len(text) > 0:
+#                 embedding_w2v = [W[word_idx_map[word]] for word in text.split(" ")]
+#                 embedding_glove = [W_glove[word_idx_map_glove[word]] for word in text.split(" ")]
+
+#         embedding_w2v_ = sum(embedding_w2v) / numwords
+#         embedding_glove_ = sum(embedding_glove) / numwords
+#         embedding = [*embedding_w2v_, *embedding_glove_]
+#         doc_embedding.append(embedding)
+
+#     return doc_embedding
 
 
 def get_doc_vec_bow(revs, word_idx_map, vocab):
