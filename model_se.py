@@ -452,18 +452,18 @@ def information_gain_train(revs):
 
 
 if __name__ == "__main__":
-    # datasets = ["mpqa"] # [ "rt", "cr", "mpqa", "subj"]
-    # algorithms = ["ig", "se"]
-    # for dataset in datasets:
-    #     for algorithm in algorithms:
-    #         print("======= training {} dataset by using w2v_glove {} =======".format(dataset, algorithm), flush=True)
-    #         print(flush=True)
-    #         train_model(dataset, algorithm)
-
-    datasets_dev = ["trec"]  # "sst2", "sst1", "trec"
-    algorithms = ["se"]
-    for dataset in datasets_dev:
+    datasets = ["rt"] # [ "rt", "cr", "mpqa", "subj"]
+    algorithms = ["ig", "se"]
+    for dataset in datasets:
         for algorithm in algorithms:
             print("======= training {} dataset by using w2v_glove {} =======".format(dataset, algorithm), flush=True)
             print(flush=True)
-            train_model_has_dev_set(dataset, algorithm)
+            train_model(dataset, algorithm)
+
+    # datasets_dev = ["trec"]  # "sst2", "sst1", "trec"
+    # algorithms = ["se"]
+    # for dataset in datasets_dev:
+    #     for algorithm in algorithms:
+    #         print("======= training {} dataset by using w2v_glove {} =======".format(dataset, algorithm), flush=True)
+    #         print(flush=True)
+    #         train_model_has_dev_set(dataset, algorithm)
