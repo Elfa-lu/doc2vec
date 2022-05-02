@@ -129,24 +129,26 @@ def get_doc_vec_multi(dataset, revs, W_1, word_idx_map_1, W_2, word_idx_map_2, W
         text = sentence["text"]
         numwords = sentence["num_words"]
 
-        if len(text) == 0 and W_3 is None:
-            doc_embedding.append(np.random.uniform(-0.25, 0.25, 900))
-            continue
+        # if len(text) == 0 and W_3 is None:
+        #     doc_embedding.append(np.random.uniform(-0.25, 0.25, 900))
+        #     continue
 
-        if len(text) == 0 and not W_3 is None:
-            doc_embedding.append(np.random.uniform(-0.25, 0.25, 600))
-            continue
+        # if len(text) == 0 and not W_3 is None:
+        #     doc_embedding.append(np.random.uniform(-0.25, 0.25, 600))
+        #     continue
         
         if dataset == "sst1" or dataset == "sst2" or dataset == "trec":
-            embedding_1 = [W_1[word_idx_map_1[word] - 1] for word in text.split(" ")]
-            embedding_2 = [W_2[word_idx_map_2[word] - 1] for word in text.split(" ")]
-            if W_3 is not None:
-                embedding_3 = [W_3[word_idx_map_3[word] - 1] for word in text.split(" ")]
+            if len(text) > 0:
+                embedding_1 = [W_1[word_idx_map_1[word] - 1] for word in text.split(" ")]
+                embedding_2 = [W_2[word_idx_map_2[word] - 1] for word in text.split(" ")]
+                if W_3 is not None:
+                    embedding_3 = [W_3[word_idx_map_3[word] - 1] for word in text.split(" ")]
         else:
-            embedding_1 = [W_1[word_idx_map_1[word]] for word in text.split(" ")]
-            embedding_2 = [W_2[word_idx_map_2[word]] for word in text.split(" ")]
-            if W_3 is not None:
-                embedding_3 = [W_3[word_idx_map_3[word] - 1] for word in text.split(" ")]
+            if len(text) > 0:
+                embedding_1 = [W_1[word_idx_map_1[word]] for word in text.split(" ")]
+                embedding_2 = [W_2[word_idx_map_2[word]] for word in text.split(" ")]
+                if W_3 is not None:
+                    embedding_3 = [W_3[word_idx_map_3[word]] for word in text.split(" ")]
 
         embedding_1_ = sum(embedding_1) / numwords
         embedding_2_ = sum(embedding_2) / numwords
