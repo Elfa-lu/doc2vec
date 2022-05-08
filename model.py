@@ -286,18 +286,18 @@ def train_model_has_dev_set(dataset, algorithm, random_state=0, cv=10):
 if __name__ == "__main__":
     # "w2vMean", "w2vMin", "w2vMax", "bow", "tfidf", "w2v_glove", "glove", "se", "ig", 
     # "fasttext_wiki", "fasttext_crawl", "glove_w2v_ft", "glove_ft", "w2v_ft"
-    # datasets = ["rt"] # [ "rt", "cr", "mpqa", "subj"]
-    # algorithms = ["glove_w2v_ft", "glove_ft", "w2v_ft", "fasttext_wiki", "fasttext_crawl"]  
-    # for dataset in datasets:
-    #     for algorithm in algorithms:
-    #         print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
-    #         print(flush=True)
-    #         train_model(dataset, algorithm)
-
-    datasets_dev = ["trec"]  # "sst2", "sst1", "trec" 
-    algorithms_dev = ["glove_w2v_ft", "glove_ft", "w2v_ft", "fasttext_wiki", "fasttext_crawl"] # ["w2v_glove", "glove", "w2vMean", "bow", "tfidf"]
-    for dataset in datasets_dev:
-        for algorithm in algorithms_dev:
+    datasets = ["rt", "subj"] # ["rt", "cr", "mpqa", "subj"]
+    algorithms = ["glove_w2v_ft", "glove_ft", "w2v_ft", "fasttext_wiki", "fasttext_crawl"]  
+    for dataset in datasets:
+        for algorithm in algorithms:
             print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
             print(flush=True)
-            train_model_has_dev_set(dataset, algorithm)
+            train_model(dataset, algorithm)
+
+    # datasets_dev = ["sst2"]  # "sst2", "sst1", "trec" 
+    # algorithms_dev = ["glove_w2v_ft", "glove_ft", "w2v_ft", "fasttext_wiki", "fasttext_crawl"] # ["w2v_glove", "glove", "w2vMean", "bow", "tfidf"]
+    # for dataset in datasets_dev:
+    #     for algorithm in algorithms_dev:
+    #         print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
+    #         print(flush=True)
+    #         train_model_has_dev_set(dataset, algorithm)
