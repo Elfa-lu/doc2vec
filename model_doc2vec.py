@@ -25,7 +25,7 @@ def train_model(dataset, algorithm="doc2vec", cv=10, random_state=0):
         train = train_[:int(train_size * 0.9)]
         dev = train_[int(train_size * 0.9):]
 
-        # X_train_ = get_doc2vec(train_)
+        X_train_ = get_doc2vec(train_)
         X_train = get_doc2vec(train)
         X_dev = get_doc2vec(dev, False)
         X_test = get_doc2vec(test, False)
@@ -36,18 +36,14 @@ def train_model(dataset, algorithm="doc2vec", cv=10, random_state=0):
 
         X_train = [model.dv[i] for i in range(len(X_train))]
         X_dev = [model.infer_vector(X_dev[i]) for i in range(len(X_dev))]
-        X_test = [model.infer_vector(X_test[i]) for i in range(len(X_test))]
-        X_train_ = X_train + X_dev
 
         y_train_ = [rev["y"] for rev in train_]
         y_train = [rev["y"] for rev in train]
         y_dev = [rev["y"] for rev in dev]
         y_test = [rev["y"] for rev in test]  
 
-        X_train_ = pd.DataFrame(X_train_)
         X_train = pd.DataFrame(X_train)
         X_dev = pd.DataFrame(X_dev)
-        X_test = pd.DataFrame(X_test)
         y_train_ = pd.Series(y_train_)
         y_train = pd.Series(y_train)
         y_dev = pd.Series(y_dev)
@@ -103,6 +99,12 @@ def train_model(dataset, algorithm="doc2vec", cv=10, random_state=0):
                 best_acc = acc
                 best_clf = clf
 
+        model_2 = Doc2Vec(X_train_, vector_size=300, window=2, min_count=1, epochs=20)
+        X_train_ = [model_2.dv[i] for i in range(len(X_train_))]
+        X_test = [model_2.infer_vector(X_test[i]) for i in range(len(X_test))]
+        X_train_ = pd.DataFrame(X_train_)
+        X_test = pd.DataFrame(X_test)
+
         best_clf.fit(X_train_, y_train_)
         acc = accuracy_score(y_test, best_clf.predict(X_test))
         print("cv: " + str(i + 1) + ", acc: " + str(acc), flush=True)
@@ -157,14 +159,12 @@ def train_model_has_dev_set(dataset, algorithm="se", random_state=0, cv=10):
         y_train_ = y_train + y_dev
         y_test = target[train_size:]
 
-    model = Doc2Vec(vector_size=300, window=2, min_count=1, epochs=20)
-    model.build_vocab(X_train)
-    model.train(X_train, total_examples=model.corpus_count, epochs=model.epochs)
+    model = Doc2Vec(X_train, vector_size=300, window=2, min_count=1, epochs=20)
+    # model.build_vocab(X_train)
+    # model.train(X_train, total_examples=model.corpus_count, epochs=model.epochs)
 
     X_train = [model.dv[i] for i in range(len(X_train))]
     X_dev = [model.infer_vector(X_dev[i]) for i in range(len(X_dev))]
-    X_test = [model.infer_vector(X_test[i]) for i in range(len(X_test))]
-    X_train_ = X_train + X_dev
 
     # train_size = len(y_train)
     # dev_size = len(y_dev)
@@ -231,6 +231,15 @@ def train_model_has_dev_set(dataset, algorithm="se", random_state=0, cv=10):
     print("best_acc:" + str(best_acc) + "  optimal_clf:" + str(best_clf))
 
     # accuracy on test set using the best parameter
+    model_2 = Doc2Vec(X_train_, vector_size=300, window=2, min_count=1, epochs=20)
+    # model.build_vocab(X_train)
+    # model.train(X_train, total_examples=model.corpus_count, epochs=model.epochs)
+
+    X_train_ = [model_2.dv[i] for i in range(len(X_train_))]
+    X_test = [model_2.infer_vector(X_test[i]) for i in range(len(X_test))]
+    X_train_ = pd.DataFrame(X_train_)
+    X_test = pd.DataFrame(X_test)
+
     best_clf.fit(X_train_, y_train_)
     pred_val = best_clf.predict(X_test)
     acc = accuracy_score(y_test, pred_val)
@@ -249,7 +258,7 @@ def get_doc2vec(revs, train=True):
 
 
 if __name__ == "__main__":
-    # datasets = ["rt"] # [ "rt", "cr", "mpqa", "subj"]
+    # datasets = ["cr"] # [ "rt", "cr", "mpqa", "subj"]
     # algorithms = ["doc2vec"]
     # for dataset in datasets:
     #     for algorithm in algorithms:
