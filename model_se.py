@@ -14,6 +14,7 @@ def train_model(dataset, algorithm="se", cv=10, random_state=0):
     results = []
 
     for i in range(cv):
+        start_time = time.time()
         train_, test = [], []
         for rev in revs:
             if rev["split"] == i:            
@@ -43,6 +44,7 @@ def train_model(dataset, algorithm="se", cv=10, random_state=0):
         y_train = pd.Series(y_train)
         y_dev = pd.Series(y_dev)
         y_test = pd.Series(y_test)
+        print("--- %s seconds preprocessing data ---" % (time.time() - start_time))
 
         best_acc = 0
 
@@ -105,6 +107,7 @@ def train_model(dataset, algorithm="se", cv=10, random_state=0):
 
 def train_model_has_dev_set(dataset, algorithm="se", random_state=0, cv=10):
     revs, W,  _, word_idx_map, vocab, W_glove, word_idx_map_glove = load_preprocessed_data_sst(dataset)
+    start_time = time.time()
 
     if dataset == "sst1" or dataset == "sst2":
         file_name = dataset.upper() + ".hdf5"
@@ -157,7 +160,8 @@ def train_model_has_dev_set(dataset, algorithm="se", random_state=0, cv=10):
     y_train = pd.Series(y_train)
     y_dev = pd.Series(y_dev)
     y_test = pd.Series(y_test)
-
+    print("--- %s seconds preprocessing data ---" % (time.time() - start_time))
+    
     best_acc = 0
 
     kernel = "rbf"
@@ -452,8 +456,8 @@ def information_gain_train(revs):
 
 
 if __name__ == "__main__":
-    datasets = ["rt"] # [ "rt", "cr", "mpqa", "subj"]
-    algorithms = ["ig", "se"]
+    datasets = ["mpqa"] # [ "rt", "cr", "mpqa", "subj"]
+    algorithms = ["se", "ig"]
     for dataset in datasets:
         for algorithm in algorithms:
             print("======= training {} dataset by using w2v_glove {} =======".format(dataset, algorithm), flush=True)
