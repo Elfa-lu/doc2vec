@@ -163,28 +163,29 @@ def get_doc_vec_multi(dataset, revs, W_1, word_idx_map_1, W_2, word_idx_map_2, W
     return doc_embedding
 
 
-# def get_doc_vec_multi(dataset, revs, W, word_idx_map, W_glove, word_idx_map_glove):
-#     doc_embedding = []
+def save_embeddings(dataset, revs, W_1, word_idx_map_1, W_2, word_idx_map_2, W_3, word_idx_map_3):
+    embeddings = []
 
-#     for sentence in revs:
-#         text = sentence["text"]
-#         numwords = sentence["num_words"]
+    for sentence in revs:
+        text = sentence["text"]
+        target = sentence["y"]
         
-#         if dataset == "sst1" or dataset == "sst2" or dataset == "trec":
-#             if len(text) > 0:
-#                 embedding_w2v = [W[word_idx_map[word] - 1] for word in text.split(" ")]
-#                 embedding_glove = [W_glove[word_idx_map_glove[word] - 1] for word in text.split(" ")]
-#         else:
-#             if len(text) > 0:
-#                 embedding_w2v = [W[word_idx_map[word]] for word in text.split(" ")]
-#                 embedding_glove = [W_glove[word_idx_map_glove[word]] for word in text.split(" ")]
+        if len(text) == 0:
+            continue
 
-#         embedding_w2v_ = sum(embedding_w2v) / numwords
-#         embedding_glove_ = sum(embedding_glove) / numwords
-#         embedding = [*embedding_w2v_, *embedding_glove_]
-#         doc_embedding.append(embedding)
+        if dataset == "sst1" or dataset == "sst2" or dataset == "trec":
+            embedding_1 = [W_1[word_idx_map_1[word] - 1] for word in text.split(" ")]
+            embedding_2 = [W_2[word_idx_map_2[word] - 1] for word in text.split(" ")]
+            embedding_3 = [W_3[word_idx_map_3[word] - 1] for word in text.split(" ")]
+        else:
+            embedding_1 = [W_1[word_idx_map_1[word]] for word in text.split(" ")]
+            embedding_2 = [W_2[word_idx_map_2[word]] for word in text.split(" ")]
+            embedding_3 = [W_3[word_idx_map_3[word]] for word in text.split(" ")]
 
-#     return doc_embedding
+        embeddings.append([embedding_1, embedding_2, embedding_3, target])
+    
+    filename = "w2v_glo_ft_embeddings_" + dataset
+    cPickle.dump(embeddings, open(filename, "wb"))
 
 
 def get_doc_vec_bow(revs, word_idx_map, vocab):
@@ -305,17 +306,7 @@ def add_lsa_features(revs):
 
 
 if __name__ == "__main__":
-    (
-        revs,
-        W,
-        _,
-        word_idx_map,
-        vocab,
-        W_glove,
-        word_idx_map_glove,
-    ) = load_preprocessed_data("rt")
+    revs, W, W2, word_idx_map, vocab, W_glove, word_idx_map_glove, W_ft_wiki, word_idx_map_ft_wiki, W_ft_crawl, word_idx_map_ft_crawl = load_preprocessed_data("cr")
+    save_embeddings("cr", revs, W, word_idx_map, W_glove, word_idx_map_glove, W_ft_crawl, word_idx_map_ft_crawl)
 
-    features = add_lsa_features(revs)
-
-    # doc_embedding = get_doc_vec_options(revs, W, word_idx_map, option="mean")
-    # print(doc_embedding[0])
+    # features = add_lsa_features(revs)
