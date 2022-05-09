@@ -30,7 +30,7 @@ def train_model(dataset, algorithm="doc2vec", cv=10, random_state=0):
         X_dev = get_doc2vec(dev, False)
         X_test = get_doc2vec(test, False)
         
-        model = Doc2Vec(X_train, vector_size=300, window=2, min_count=1, epochs=20)
+        model = Doc2Vec(X_train, vector_size=300, window=2, epochs=20)
         # model.build_vocab(X_train)
         # model.train(X_train)
 
@@ -99,7 +99,7 @@ def train_model(dataset, algorithm="doc2vec", cv=10, random_state=0):
                 best_acc = acc
                 best_clf = clf
 
-        model_2 = Doc2Vec(X_train_, vector_size=300, window=2, min_count=1, epochs=20)
+        model_2 = Doc2Vec(X_train_, vector_size=300, window=2, epochs=20)
         X_train_ = [model_2.dv[i] for i in range(len(X_train_))]
         X_test = [model_2.infer_vector(X_test[i]) for i in range(len(X_test))]
         X_train_ = pd.DataFrame(X_train_)
@@ -114,7 +114,7 @@ def train_model(dataset, algorithm="doc2vec", cv=10, random_state=0):
     print("10 fold vc validation result for SVM: ", str(np.mean(results)), flush=True)
 
 
-def train_model_has_dev_set(dataset, algorithm="se", random_state=0, cv=10):
+def train_model_has_dev_set(dataset, algorithm="doc2vec", random_state=0, cv=10):
     revs, _,  _, _, _, _, _, _, _, _, _ = load_preprocessed_data_sst(dataset)
 
     if dataset == "sst1" or dataset == "sst2":
@@ -159,7 +159,7 @@ def train_model_has_dev_set(dataset, algorithm="se", random_state=0, cv=10):
         y_train_ = y_train + y_dev
         y_test = target[train_size:]
 
-    model = Doc2Vec(X_train, vector_size=300, window=2, min_count=1, epochs=20)
+    model = Doc2Vec(X_train, vector_size=300, window=5, epochs=20)
     # model.build_vocab(X_train)
     # model.train(X_train, total_examples=model.corpus_count, epochs=model.epochs)
 
@@ -171,7 +171,6 @@ def train_model_has_dev_set(dataset, algorithm="se", random_state=0, cv=10):
 
     X_train = pd.DataFrame(X_train)
     X_dev = pd.DataFrame(X_dev)
-    X_test = pd.DataFrame(X_test)
     y_train = pd.Series(y_train)
     y_dev = pd.Series(y_dev)
     y_test = pd.Series(y_test)
@@ -231,7 +230,7 @@ def train_model_has_dev_set(dataset, algorithm="se", random_state=0, cv=10):
     print("best_acc:" + str(best_acc) + "  optimal_clf:" + str(best_clf))
 
     # accuracy on test set using the best parameter
-    model_2 = Doc2Vec(X_train_, vector_size=300, window=2, min_count=1, epochs=20)
+    model_2 = Doc2Vec(X_train_, vector_size=300, window=5, epochs=20)
     # model.build_vocab(X_train)
     # model.train(X_train, total_examples=model.corpus_count, epochs=model.epochs)
 
@@ -241,8 +240,7 @@ def train_model_has_dev_set(dataset, algorithm="se", random_state=0, cv=10):
     X_test = pd.DataFrame(X_test)
 
     best_clf.fit(X_train_, y_train_)
-    pred_val = best_clf.predict(X_test)
-    acc = accuracy_score(y_test, pred_val)
+    acc = accuracy_score(y_test, best_clf.predict(X_test))
     print("accuracy on test dataset: " + str(acc))
 
 
@@ -258,18 +256,18 @@ def get_doc2vec(revs, train=True):
 
 
 if __name__ == "__main__":
-    # datasets = ["cr"] # [ "rt", "cr", "mpqa", "subj"]
-    # algorithms = ["doc2vec"]
-    # for dataset in datasets:
-    #     for algorithm in algorithms:
-    #         print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
-    #         print(flush=True)
-    #         train_model(dataset, algorithm)
-
-    datasets_dev = ["trec"]  # "sst2", "sst1", "trec"
+    datasets = ["mpqa"] # [ "rt", "cr", "mpqa", "subj"]
     algorithms = ["doc2vec"]
-    for dataset in datasets_dev:
+    for dataset in datasets:
         for algorithm in algorithms:
             print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
             print(flush=True)
-            train_model_has_dev_set(dataset, algorithm)
+            train_model(dataset, algorithm)
+
+    # datasets_dev = ["trec"]  # "sst2", "sst1", "trec"
+    # algorithms = ["doc2vec"]
+    # for dataset in datasets_dev:
+    #     for algorithm in algorithms:
+    #         print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
+    #         print(flush=True)
+    #         train_model_has_dev_set(dataset, algorithm)
