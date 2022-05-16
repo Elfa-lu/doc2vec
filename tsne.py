@@ -42,24 +42,36 @@ def get_tsne(dataset="rt", algorithm="w2vMean", n_components=2, random_state=0):
     x, y = get_data(dataset, algorithm)
     standarized_x = StandardScaler().fit_transform(x)
 
-    if n_components == 2:
-        tsne = TSNE(
-            n_components=n_components,
-            perplexity=200,
-            n_iter=4000,
-            learning_rate='auto',
-            verbose=1,
-            init="pca",
-            random_state=random_state,
-        )
-        z = tsne.fit_transform(standarized_x)
-        df = pd.DataFrame()
-        df["y"] = y
-        df["comp-1"] = z[:, 0]
-        df["comp-2"] = z[:, 1]
-        n = len(pd.unique(df["y"]))
+    perplexities = [30, 50, 100, 200] 
+    n_iters=[500, 1000, 2000, 3000] 
 
-        sns_plot = sns.scatterplot(
+    if n_components == 2:
+        df = pd.DataFrame()
+        for perplexity in perplexities:
+            for n_iter in n_iters:
+                tsne = TSNE(
+                    n_components=n_components,
+                    perplexity=perplexity,
+                    n_iter=n_iter,
+                    learning_rate='auto',
+                    verbose=1,
+                    init="pca",
+                    random_state=random_state,
+                )
+
+                z = tsne.fit_transform(standarized_x)
+                df_ = pd.DataFrame()
+                df_["y"] = y
+                df_["comp-1"] = z[:, 0]
+                df_["comp-2"] = z[:, 1]
+                df_["perplexity"] = perplexity
+                df_["n_iter"] = n_iter
+                df = pd.concat([df, df_])
+                
+        n = len(pd.unique(df["y"]))
+        g = sns.FacetGrid(df, row="perplexity", col="n_iter")
+        sns_plot = g.map(
+            sns.scatterplot,
             x="comp-1",
             y="comp-2",
             hue="y",  # df.y.tolist(),
@@ -68,11 +80,11 @@ def get_tsne(dataset="rt", algorithm="w2vMean", n_components=2, random_state=0):
             data=df,
         )  # .set(title="{} data {} T-SNE projection")
 
-        figure = sns_plot.get_figure()
-        figure.savefig("{} data {} T-SNE 2d projection.png".format(dataset, algorithm))
+        # figure = sns_plot.get_figure()
+        sns_plot.savefig("{} data {} T-SNE 2d projection.png".format(dataset, algorithm))
 
-        figure.clear()
-        plt.close(figure)
+        # figure.clear()
+        # plt.close(figure)
 
     elif n_components == 3:
         tsne = TSNE(
@@ -103,17 +115,17 @@ def get_tsne(dataset="rt", algorithm="w2vMean", n_components=2, random_state=0):
 
 
 if __name__ == "__main__":
-    datasets = ["trec", "cr"]
+    datasets = ["trec"] #, "cr"
     algorithms = [
         "w2vMean",
-        "glove",
-        "fasttext_crawl",
-        "glove_w2v_ft",
-        "glove_ft",
-        "w2v_ft",
-        "w2v_glove",
-        "bow",
-        "tfidf",
+        # "glove",
+        # "fasttext_crawl",
+        # "glove_w2v_ft",
+        # "glove_ft",
+        # "w2v_ft",
+        # "w2v_glove",
+        # "bow",
+        # "tfidf",
     ]
 
     for dataset in datasets:
