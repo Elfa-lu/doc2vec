@@ -45,8 +45,9 @@ def get_tsne(dataset="rt", algorithm="w2vMean", n_components=2, random_state=0):
     if n_components == 2:
         tsne = TSNE(
             n_components=n_components,
-            perplexity=100,
-            n_iter=3000,
+            perplexity=200,
+            n_iter=4000,
+            learning_rate='auto',
             verbose=1,
             init="pca",
             random_state=random_state,
@@ -62,6 +63,7 @@ def get_tsne(dataset="rt", algorithm="w2vMean", n_components=2, random_state=0):
             x="comp-1",
             y="comp-2",
             hue="y",  # df.y.tolist(),
+            s=2,
             palette=sns.color_palette("hls", n),
             data=df,
         )  # .set(title="{} data {} T-SNE projection")
@@ -76,7 +78,8 @@ def get_tsne(dataset="rt", algorithm="w2vMean", n_components=2, random_state=0):
         tsne = TSNE(
             n_components=n_components,
             perplexity=200,
-            n_iter=3000,
+            n_iter=4000,
+            learning_rate='auto',
             verbose=1,
             init="pca",
             random_state=random_state,
@@ -100,7 +103,7 @@ def get_tsne(dataset="rt", algorithm="w2vMean", n_components=2, random_state=0):
 
 
 if __name__ == "__main__":
-    datasets = ["rt", "trec"]
+    datasets = ["trec", "cr"]
     algorithms = [
         "w2vMean",
         "glove",
