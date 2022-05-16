@@ -163,17 +163,21 @@ def train_model_has_dev_set(dataset, algorithm="doc2vec", random_state=0, cv=10)
         y_train_ = y_train + y_dev
         y_test = target[train_size:]
 
-    model = Doc2Vec(X_train, vector_size=300, window=5, epochs=20)
+    model = Doc2Vec(X_train, vector_size=300, window=4, epochs=20)
     # model.build_vocab(X_train)
     # model.train(X_train, total_examples=model.corpus_count, epochs=model.epochs)
 
     X_train = [model.dv[i] for i in range(len(X_train))]
+    X_test = [model.infer_vector(X_test[i]) for i in range(len(X_test))]
     X_dev = [model.infer_vector(X_dev[i]) for i in range(len(X_dev))]
+    X_train_ = X_train + X_dev
 
     # train_size = len(y_train)
     # dev_size = len(y_dev)
 
     X_train = pd.DataFrame(X_train)
+    X_train_ = pd.DataFrame(X_train_)
+    X_test = pd.DataFrame(X_test)
     X_dev = pd.DataFrame(X_dev)
     y_train = pd.Series(y_train)
     y_dev = pd.Series(y_dev)
@@ -234,15 +238,6 @@ def train_model_has_dev_set(dataset, algorithm="doc2vec", random_state=0, cv=10)
     print("best_acc:" + str(best_acc) + "  optimal_clf:" + str(best_clf))
 
     # accuracy on test set using the best parameter
-    model_2 = Doc2Vec(X_train_, vector_size=300, window=5, epochs=20)
-    # model.build_vocab(X_train)
-    # model.train(X_train, total_examples=model.corpus_count, epochs=model.epochs)
-
-    X_train_ = [model_2.dv[i] for i in range(len(X_train_))]
-    X_test = [model_2.infer_vector(X_test[i]) for i in range(len(X_test))]
-    X_train_ = pd.DataFrame(X_train_)
-    X_test = pd.DataFrame(X_test)
-
     best_clf.fit(X_train_, y_train_)
     acc = accuracy_score(y_test, best_clf.predict(X_test))
     print("accuracy on test dataset: " + str(acc))
@@ -260,18 +255,18 @@ def get_doc2vec(revs, train=True):
 
 
 if __name__ == "__main__":
-    datasets = ["rt"] # [ "rt", "cr", "mpqa", "subj"]
-    algorithms = ["doc2vec"]
-    for dataset in datasets:
-        for algorithm in algorithms:
-            print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
-            print(flush=True)
-            train_model(dataset, algorithm)
-
-    # datasets_dev = ["trec"]  # "sst2", "sst1", "trec"
+    # datasets = ["mpqa"] # [ "rt", "cr", "mpqa", "subj"]
     # algorithms = ["doc2vec"]
-    # for dataset in datasets_dev:
+    # for dataset in datasets:
     #     for algorithm in algorithms:
     #         print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
     #         print(flush=True)
-    #         train_model_has_dev_set(dataset, algorithm)
+    #         train_model(dataset, algorithm)
+
+    datasets_dev = ["trec"]  # "sst2", "sst1", "trec"
+    algorithms = ["doc2vec"]
+    for dataset in datasets_dev:
+        for algorithm in algorithms:
+            print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
+            print(flush=True)
+            train_model_has_dev_set(dataset, algorithm)
