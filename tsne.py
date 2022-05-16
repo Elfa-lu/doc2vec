@@ -3,13 +3,14 @@ from utils import *
 from sklearn.manifold import TSNE
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
 
 
 def get_data(dataset="rt", algorithm="w2vMean"):
     if dataset == "sst1" or dataset == "sst2" or dataset == "trec":
-        revs, W,  _, word_idx_map, vocab, W_glove, word_idx_map_glove, _, _, W_ft_crawl, word_idx_map_ft_crawl = load_preprocessed_data_sst(dataset)
+        revs, W,  _, word_idx_map, vocab, W_glove, word_idx_map_glove, W_ft_wiki, word_idx_map_ft_wiki, W_ft_crawl, word_idx_map_ft_crawl = load_preprocessed_data_sst(dataset)
     else:
-        revs, W,  _, word_idx_map, vocab, W_glove, word_idx_map_glove, _, _, W_ft_crawl, word_idx_map_ft_crawl = load_preprocessed_data(dataset)
+        revs, W,  _, word_idx_map, vocab, W_glove, word_idx_map_glove, W_ft_wiki, word_idx_map_ft_wiki, W_ft_crawl, word_idx_map_ft_crawl = load_preprocessed_data(dataset)
     target = [rev["y"] for rev in revs]
 
     if algorithm == "w2vMean":
@@ -39,52 +40,67 @@ def get_data(dataset="rt", algorithm="w2vMean"):
 
 def get_tsne(dataset="rt", algorithm="w2vMean", n_components=2, random_state=0):
     x, y = get_data(dataset, algorithm)
+    standarized_x = StandardScaler().fit_transform(x)
 
     if n_components == 2:
-        tsne = TSNE(n_components=n_components, perplexity=300, verbose=1, random_state=random_state)
-        z = tsne.fit_transform(x)
+        tsne = TSNE(
+            n_components=n_components,
+            perplexity=100,
+            n_iter=3000,
+            verbose=1,
+            init="pca",
+            random_state=random_state,
+        )
+        z = tsne.fit_transform(standarized_x)
         df = pd.DataFrame()
         df["y"] = y
         df["comp-1"] = z[:, 0]
         df["comp-2"] = z[:, 1]
-        n = len(pd.unique(df['y']))
+        n = len(pd.unique(df["y"]))
 
         sns_plot = sns.scatterplot(
             x="comp-1",
             y="comp-2",
-            hue="y", #df.y.tolist(),
+            hue="y",  # df.y.tolist(),
             palette=sns.color_palette("hls", n),
             data=df,
-        ) #.set(title="{} data {} T-SNE projection")
+        )  # .set(title="{} data {} T-SNE projection")
 
-        figure = sns_plot.get_figure()    
+        figure = sns_plot.get_figure()
         figure.savefig("{} data {} T-SNE 2d projection.png".format(dataset, algorithm))
 
         figure.clear()
         plt.close(figure)
 
     elif n_components == 3:
-        tsne = TSNE(n_components=n_components, perplexity=200, verbose=1, random_state=random_state)
-        z = tsne.fit_transform(x)
+        tsne = TSNE(
+            n_components=n_components,
+            perplexity=200,
+            n_iter=3000,
+            verbose=1,
+            init="pca",
+            random_state=random_state,
+        )
+        z = tsne.fit_transform(standarized_x)
         df = pd.DataFrame()
         df["y"] = y
         df["comp-1"] = z[:, 0]
         df["comp-2"] = z[:, 1]
         df["comp-3"] = z[:, 2]
-        n = len(pd.unique(df['y']))
+        n = len(pd.unique(df["y"]))
 
         fig = plt.figure()
-        ax = plt.axes(projection='3d')
-        ax.scatter(df["comp-1"], df["comp-2"], df["comp-3"], cmap='viridis')
-        ax.set_xlabel('comp-1')
-        ax.set_ylabel('comp-2')
-        ax.set_zlabel('comp-3')
+        ax = plt.axes(projection="3d")
+        ax.scatter(df["comp-1"], df["comp-2"], df["comp-3"], cmap="viridis")
+        ax.set_xlabel("comp-1")
+        ax.set_ylabel("comp-2")
+        ax.set_zlabel("comp-3")
 
         plt.savefig("{} data {} T-SNE 3d projection.png".format(dataset, algorithm))
 
 
 if __name__ == "__main__":
-    datasets = ["cr", "trec"]
+    datasets = ["rt", "trec"]
     algorithms = [
         "w2vMean",
         "glove",
