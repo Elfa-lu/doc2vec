@@ -2,6 +2,7 @@ import pandas as pd
 from utils import *
 from sklearn.manifold import TSNE
 import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 def get_data(dataset="rt", algorithm="w2vMean"):
@@ -36,31 +37,51 @@ def get_data(dataset="rt", algorithm="w2vMean"):
     return x, y
 
 
-def get_tsne(dataset="rt", algorithm="w2vMean"):
+def get_tsne(dataset="rt", algorithm="w2vMean", n_components=2, random_state=0):
     x, y = get_data(dataset, algorithm)
 
-    tsne = TSNE(n_components=2, perplexity=200, verbose=1, random_state=123)
-    z = tsne.fit_transform(x)
-    df = pd.DataFrame()
-    df["y"] = y
-    df["comp-1"] = z[:, 0]
-    df["comp-2"] = z[:, 1]
-    n = len(pd.unique(df['y']))
+    if n_components == 2:
+        tsne = TSNE(n_components=n_components, perplexity=300, verbose=1, random_state=random_state)
+        z = tsne.fit_transform(x)
+        df = pd.DataFrame()
+        df["y"] = y
+        df["comp-1"] = z[:, 0]
+        df["comp-2"] = z[:, 1]
+        n = len(pd.unique(df['y']))
 
-    sns_plot = sns.scatterplot(
-        x="comp-1",
-        y="comp-2",
-        hue=df.y.tolist(),
-        palette=sns.color_palette("hls", n),
-        data=df,
-    ) #.set(title="{} data {} T-SNE projection")
+        sns_plot = sns.scatterplot(
+            x="comp-1",
+            y="comp-2",
+            hue=df.y.tolist(),
+            palette=sns.color_palette("hls", n),
+            data=df,
+        ) #.set(title="{} data {} T-SNE projection")
 
-    figure = sns_plot.get_figure()    
-    figure.savefig("{} data {} T-SNE projection.png".format(dataset, algorithm))
+        figure = sns_plot.get_figure()    
+        figure.savefig("{} data {} T-SNE 2d projection.png".format(dataset, algorithm))
 
-    
+    elif n_components == 3:
+        tsne = TSNE(n_components=n_components, perplexity=200, verbose=1, random_state=random_state)
+        z = tsne.fit_transform(x)
+        df = pd.DataFrame()
+        df["y"] = y
+        df["comp-1"] = z[:, 0]
+        df["comp-2"] = z[:, 1]
+        df["comp-3"] = z[:, 2]
+        n = len(pd.unique(df['y']))
+
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        ax.scatter(df["comp-1"], df["comp-2"], df["comp-3"], cmap='viridis')
+        ax.set_xlabel('comp-1')
+        ax.set_ylabel('comp-2')
+        ax.set_zlabel('comp-3')
+
+        plt.savefig("{} data {} T-SNE 3d projection.png".format(dataset, algorithm))
+
+
 if __name__ == "__main__":
-    datasets = ["rt", "trec"]
+    datasets = ["cr", "trec"]
     algorithms = [
         "w2vMean",
         "glove",
