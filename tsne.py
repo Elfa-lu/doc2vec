@@ -52,13 +52,16 @@ def get_tsne(dataset="rt", algorithm="w2vMean", n_components=2, random_state=0):
         sns_plot = sns.scatterplot(
             x="comp-1",
             y="comp-2",
-            hue=df.y.tolist(),
+            hue="y", #df.y.tolist(),
             palette=sns.color_palette("hls", n),
             data=df,
         ) #.set(title="{} data {} T-SNE projection")
 
         figure = sns_plot.get_figure()    
         figure.savefig("{} data {} T-SNE 2d projection.png".format(dataset, algorithm))
+
+        figure.clear()
+        plt.close(figure)
 
     elif n_components == 3:
         tsne = TSNE(n_components=n_components, perplexity=200, verbose=1, random_state=random_state)
