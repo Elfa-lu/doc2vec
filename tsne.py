@@ -42,8 +42,8 @@ def get_tsne(dataset="rt", algorithm="w2vMean", n_components=2, random_state=0):
     x, y = get_data(dataset, algorithm)
     standarized_x = StandardScaler().fit_transform(x)
 
-    perplexities = [30, 50, 100, 200] 
-    n_iters=[500, 1000, 2000, 3000] 
+    perplexities = [30, 50, 100, 200]  #
+    n_iters=[500, 1000, 2000, 3000] #
 
     if n_components == 2:
         df = pd.DataFrame()
@@ -67,17 +67,23 @@ def get_tsne(dataset="rt", algorithm="w2vMean", n_components=2, random_state=0):
                 df_["perplexity"] = perplexity
                 df_["n_iter"] = n_iter
                 df = pd.concat([df, df_])
-                
+
+        df.reset_index()       
         n = len(pd.unique(df["y"]))
-        g = sns.FacetGrid(df, row="perplexity", col="n_iter")
+
+        g = sns.FacetGrid(
+            df,
+            row="perplexity", 
+            col="n_iter", 
+            palette=sns.color_palette("hls", n),
+            hue="y", 
+        )
         sns_plot = g.map(
             sns.scatterplot,
-            x="comp-1",
-            y="comp-2",
-            hue="y",  # df.y.tolist(),
+            "comp-1",
+            "comp-2",
             s=2,
-            palette=sns.color_palette("hls", n),
-            data=df,
+            # data=df,
         )  # .set(title="{} data {} T-SNE projection")
 
         # figure = sns_plot.get_figure()
