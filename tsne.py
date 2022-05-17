@@ -77,6 +77,8 @@ def get_tsne(dataset="rt", algorithm="w2vMean", n_components=2, random_state=0):
             col="n_iter", 
             palette=sns.color_palette("hls", n),
             hue="y", 
+            sharex=False,
+            sharey=False, 
         )
         sns_plot = g.map(
             sns.scatterplot,
@@ -124,14 +126,14 @@ if __name__ == "__main__":
     datasets = ["trec"] #, "cr"
     algorithms = [
         "w2vMean",
-        # "glove",
-        # "fasttext_crawl",
-        # "glove_w2v_ft",
-        # "glove_ft",
-        # "w2v_ft",
-        # "w2v_glove",
-        # "bow",
-        # "tfidf",
+        "glove",
+        "fasttext_crawl",
+        "glove_w2v_ft",
+        "glove_ft",
+        "w2v_ft",
+        "w2v_glove",
+        "bow",
+        "tfidf",
     ]
 
     for dataset in datasets:
