@@ -5,17 +5,20 @@ from sklearn.svm import SVC
 import numpy as np
 import pandas as pd
 import random
+from random import shuffle
 import time
 from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 
 
 def train_model(dataset, algorithm="doc2vec", cv=10, random_state=0):
     revs, _,  _, _, _, _, _, _, _, _, _ = load_preprocessed_data(dataset)
+    shuffled_revs = revs[:]
+    shuffle(shuffled_revs)
     results = []
 
     for i in range(cv):
         train_, test = [], []
-        for rev in revs:
+        for rev in shuffled_revs:
             if rev["split"] == i:            
                 test.append(rev)        
             else:  
@@ -25,18 +28,12 @@ def train_model(dataset, algorithm="doc2vec", cv=10, random_state=0):
         train = train_[:int(train_size * 0.9)]
         dev = train_[int(train_size * 0.9):]
 
-        #X_train_ = get_doc2vec(train_)
-        X_train = get_doc2vec(train)
-        X_dev = get_doc2vec(dev, False)
-        X_test = get_doc2vec(test, False)
-        
-        model = Doc2Vec(X_train, vector_size=300, window=5, epochs=20)
-        # model.build_vocab(X_train)
-        # model.train(X_train)
+        X_all_train = get_doc2vec(shuffled_revs)
+        model = Doc2Vec(X_all_train, vector_size=300, window=5, epochs=20)
 
-        X_train = [model.dv[i] for i in range(len(X_train))]
-        X_dev = [model.infer_vector(X_dev[i]) for i in range(len(X_dev))]
-        X_test = [model.infer_vector(X_test[i]) for i in range(len(X_test))]
+        X_train = [model.dv[i] for i in range(len(train))]
+        X_dev = [model.dv[i] for i in range(len(train), train_size)]
+        X_test = [model.dv[i] for i in range(train_size, len(revs))]
         X_train_ = X_train + X_dev
 
         y_train_ = [rev["y"] for rev in train_]
@@ -127,10 +124,13 @@ def train_model_has_dev_set(dataset, algorithm="doc2vec", random_state=0, cv=10)
         train_size = f["train_label"].shape[0]
         dev_size = f["dev_label"].shape[0]
 
-        X_train_ = get_doc2vec(revs[:train_size + dev_size])
-        X_train = get_doc2vec(revs[:train_size])
-        X_dev = get_doc2vec(revs[train_size : train_size + dev_size], False)
-        X_test = get_doc2vec(revs[train_size + dev_size :], False)
+        X_all_train = get_doc2vec(revs)
+        model = Doc2Vec(X_all_train, vector_size=300, window=5, epochs=20)
+
+        X_train = [model.dv[i] for i in range(train_size)]
+        X_dev = [model.dv[i] for i in range(train_size, train_size + dev_size)]
+        X_test = [model.dv[i] for i in range(train_size + dev_size, len(revs))]
+        X_train_ = X_train + X_dev
         
         target = [rev["y"] for rev in revs]
         y_train_ = target[:train_size + dev_size]
@@ -149,31 +149,20 @@ def train_model_has_dev_set(dataset, algorithm="doc2vec", random_state=0, cv=10)
         random.shuffle(idx)
         idx_train = idx[:int(train_size*0.9)]
         idx_dev = idx[int(train_size*0.9):]
-        revs_train = [element for i, element in enumerate(revs) if i in idx_train]
-        revs_dev = [element for i, element in enumerate(revs) if i in idx_dev]
 
-        X_train_ = get_doc2vec(revs_train + revs_dev)
-        X_train = get_doc2vec(revs_train)
-        X_dev = get_doc2vec(revs_dev, False)
-        X_test = get_doc2vec(revs[train_size:], False)
+        X_all_train = get_doc2vec(revs)
+        model = Doc2Vec(X_all_train, vector_size=300, window=5, epochs=20)
+
+        X_train = [model.dv[i] for i in idx_train]
+        X_dev = [model.dv[i] for i in idx_dev]
+        X_test = [model.dv[i] for i in range(train_size + dev_size, len(revs))]
+        X_train_ = X_train + X_dev
 
         target = [rev["y"] for rev in revs]
         y_train = [element for i, element in enumerate(target) if i in idx_train]
         y_dev = [element for i, element in enumerate(target) if i in idx_dev]
         y_train_ = y_train + y_dev
         y_test = target[train_size:]
-
-    model = Doc2Vec(X_train, vector_size=300, window=4, epochs=20)
-    # model.build_vocab(X_train)
-    # model.train(X_train, total_examples=model.corpus_count, epochs=model.epochs)
-
-    X_train = [model.dv[i] for i in range(len(X_train))]
-    X_test = [model.infer_vector(X_test[i]) for i in range(len(X_test))]
-    X_dev = [model.infer_vector(X_dev[i]) for i in range(len(X_dev))]
-    X_train_ = X_train + X_dev
-
-    # train_size = len(y_train)
-    # dev_size = len(y_dev)
 
     X_train = pd.DataFrame(X_train)
     X_train_ = pd.DataFrame(X_train_)
@@ -243,30 +232,27 @@ def train_model_has_dev_set(dataset, algorithm="doc2vec", random_state=0, cv=10)
     print("accuracy on test dataset: " + str(acc))
 
 
-def get_doc2vec(revs, train=True):
+def get_doc2vec(revs):
     tagged_data = []
     for idx, rev in enumerate(revs):
         text = rev["text"]
-        if train:
-            tagged_data.append(TaggedDocument(text, [idx]))
-        else:
-            tagged_data.append(text.split())
+        tagged_data.append(TaggedDocument(text, [idx]))
     return tagged_data
 
 
 if __name__ == "__main__":
-    # datasets = ["mpqa"] # [ "rt", "cr", "mpqa", "subj"]
-    # algorithms = ["doc2vec"]
-    # for dataset in datasets:
-    #     for algorithm in algorithms:
-    #         print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
-    #         print(flush=True)
-    #         train_model(dataset, algorithm)
-
-    datasets_dev = ["trec"]  # "sst2", "sst1", "trec"
+    datasets = ["mpqa"] # [ "rt", "cr", "mpqa", "subj"]
     algorithms = ["doc2vec"]
-    for dataset in datasets_dev:
+    for dataset in datasets:
         for algorithm in algorithms:
             print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
             print(flush=True)
-            train_model_has_dev_set(dataset, algorithm)
+            train_model(dataset, algorithm)
+
+    # datasets_dev = ["sst1"]  # "sst2", "sst1", "trec"
+    # algorithms = ["doc2vec"]
+    # for dataset in datasets_dev:
+    #     for algorithm in algorithms:
+    #         print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
+    #         print(flush=True)
+    #         train_model_has_dev_set(dataset, algorithm)
