@@ -50,6 +50,8 @@ def get_data(dataset="rt", algorithm="w2vMean"):
         df_feature = get_doc_vec_multi(dataset, revs, W, word_idx_map, W_ft_crawl, word_idx_map_ft_crawl)
     # lsa_feature = add_lsa_features(revs)
     # print(lsa_feature)
+    elif algorithm == "bert_12" or algorithm == "bert_24":
+        df_feature = get_doc_vec_bert(dataset, algorithm)
 
     df = pd.concat([
         pd.DataFrame(target, columns=["target"]), 
@@ -286,18 +288,19 @@ def train_model_has_dev_set(dataset, algorithm, random_state=0, cv=10):
 if __name__ == "__main__":
     # "w2vMean", "w2vMin", "w2vMax", "bow", "tfidf", "w2v_glove", "glove", "se", "ig", 
     # "fasttext_wiki", "fasttext_crawl", "glove_w2v_ft", "glove_ft", "w2v_ft"
-    datasets = ["rt", "subj"] # ["rt", "cr", "mpqa", "subj"]
-    algorithms = ["glove_w2v_ft", "glove_ft", "w2v_ft", "fasttext_wiki", "fasttext_crawl"]  
-    for dataset in datasets:
-        for algorithm in algorithms:
-            print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
-            print(flush=True)
-            train_model(dataset, algorithm)
-
-    # datasets_dev = ["sst2"]  # "sst2", "sst1", "trec" 
-    # algorithms_dev = ["glove_w2v_ft", "glove_ft", "w2v_ft", "fasttext_wiki", "fasttext_crawl"] # ["w2v_glove", "glove", "w2vMean", "bow", "tfidf"]
-    # for dataset in datasets_dev:
-    #     for algorithm in algorithms_dev:
+    # "bert_12", "bert_24"
+    # datasets = ["subj"] # ["rt", "cr", "mpqa", "subj"]
+    # algorithms = ["bert_24"]  
+    # for dataset in datasets:
+    #     for algorithm in algorithms:
     #         print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
     #         print(flush=True)
-    #         train_model_has_dev_set(dataset, algorithm)
+    #         train_model(dataset, algorithm)
+
+    datasets_dev = ["sst2"]  # "sst2", "sst1", "trec" 
+    algorithms_dev = ["bert_12"] # ["w2v_glove", "glove", "w2vMean", "bow", "tfidf"]
+    for dataset in datasets_dev:
+        for algorithm in algorithms_dev:
+            print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
+            print(flush=True)
+            train_model_has_dev_set(dataset, algorithm)

@@ -85,6 +85,15 @@ def load_preprocessed_data(dataset="rt"):
     return revs, W, W2, word_idx_map, vocab, W_glove, word_idx_map_glove, W_ft_wiki, word_idx_map_ft_wiki, W_ft_crawl, word_idx_map_ft_crawl
 
 
+def get_doc_vec_bert(dataset, algorithm):
+    if algorithm == "bert_12":
+        path = "bert_embeddings/{}_bert_embedding.npy".format(dataset)
+    elif algorithm == "bert_24":
+        path = "bert_embeddings/{}_bert_embedding_24.npy".format(dataset)
+    embedding = np.load(path)
+    return embedding
+
+
 def get_doc_vec_options(dataset, revs, W, word_idx_map, option="mean"):
     """
     Returns the mean/max/min embedding vector for each sentence. len(revs)*len(vocab)
