@@ -121,9 +121,9 @@ def train_model(dataset, algorithm, cv=10, random_state=0):
             random_state=random_state,
         )
 
-        kernel = "rbf"
-        gammas = [1e-1, 1e-2, 1e-3]
-        Cs = [10, 100, 1000]
+        kernel = "linear"
+        gammas = [10, 1, 1e-1, 1e-2]
+        Cs = [1e-2, 1e-1, 1, 10]
         for gamma in gammas:
             for c in Cs:
                 start_time = time.time()
@@ -148,27 +148,6 @@ def train_model(dataset, algorithm, cv=10, random_state=0):
                     best_acc = acc
                     best_clf = clf
 
-        kernel = "poly"
-        degrees = [i for i in range(1, 5)]
-        for degree in degrees:
-            start_time = time.time()
-            clf = SVC(
-                kernel=kernel,
-                degree=degree,
-                class_weight="balanced",
-                random_state=random_state,
-            )
-            clf.fit(X_train, y_train)
-            acc = accuracy_score(y_val, clf.predict(X_val))
-            print("--- %s seconds ---" % (time.time() - start_time))
-            print("ker:" + str(kernel) + "  degree:" + str(degree), flush=True)
-            print("acc:" + str(acc), flush=True)
-            print()
-
-            if acc > best_acc:
-                best_acc = acc
-                best_clf = clf
-
         best_clf.fit(
             X[~X.index.isin(range(rows // cv * i, rows // cv * (i + 1)))],
             y[~y.index.isin(range(rows // cv * i, rows // cv * (i + 1)))],
@@ -178,7 +157,28 @@ def train_model(dataset, algorithm, cv=10, random_state=0):
         results.append(acc)
 
     print("accuracy for each fold: " + str(results), flush=True)
-    print("10 fold vc validation result for SVM: ", str(np.mean(results)), flush=True)
+    print("10 fold cv validation result for SVM: ", str(np.mean(results)), flush=True)
+
+    # subj average execution time
+    if dataset == "subj":
+        fit_time = []
+        for i in range(10):
+            start_time_fit = time.time()
+            best_clf.fit(
+                X[~X.index.isin(range(rows // cv * i, rows // cv * (i + 1)))],
+                y[~y.index.isin(range(rows // cv * i, rows // cv * (i + 1)))],
+            )
+            fit_time.append((time.time() - start_time_fit))
+        print("avg fit time: " + "--- %s seconds ---" % (Average(fit_time)))
+        print(fit_time)
+
+        pred_time = []
+        for i in range(10):
+            start_time_pred = time.time()
+            best_clf.predict(X_test)
+            pred_time.append((time.time() - start_time_pred))
+        print("avg pred time: " + "--- %s seconds ---" % (Average(pred_time)))
+        print(pred_time)
 
 
 def train_model_has_dev_set(dataset, algorithm, random_state=0, cv=10):
@@ -226,9 +226,9 @@ def train_model_has_dev_set(dataset, algorithm, random_state=0, cv=10):
 
     best_acc = 0
 
-    kernel = "rbf"
-    gammas = [1e-1, 1e-2, 1e-3]
-    Cs = [3, 10, 100, 1000]
+    kernel = "linear"
+    gammas = [10, 1, 1e-1, 1e-2]
+    Cs = [1e-2, 1e-1, 1, 10]
     for gamma in gammas:
         for c in Cs:
             start_time = time.time()
@@ -254,28 +254,6 @@ def train_model_has_dev_set(dataset, algorithm, random_state=0, cv=10):
                 best_acc = acc
                 best_clf = clf
 
-    kernel = "poly"
-    degrees = [i for i in range(1, 5)]
-    for degree in degrees:
-        start_time = time.time()
-        clf = SVC(
-            kernel=kernel,
-            degree=degree,
-            class_weight="balanced",
-            random_state=random_state,
-        )
-        clf.fit(X_train, y_train)
-
-        acc = accuracy_score(y_dev, clf.predict(X_dev))
-        print("--- %s seconds ---" % (time.time() - start_time))
-        print("ker:" + str(kernel) + "  degree:" + str(degree), flush=True)
-        print("acc:" + str(acc))
-        print()
-
-        if acc > best_acc:
-            best_acc = acc
-            best_clf = clf
-
     print("best_acc:" + str(best_acc) + "  optimal_clf:" + str(best_clf))
 
     # accuracy on test set using the best parameter
@@ -288,20 +266,19 @@ def train_model_has_dev_set(dataset, algorithm, random_state=0, cv=10):
 if __name__ == "__main__":
     # "w2vMean", "w2vMin", "w2vMax", "bow", "tfidf", "w2v_glove", "glove", "se", "ig", 
     # "fasttext_wiki", "fasttext_crawl", "glove_w2v_ft", "glove_ft", "w2v_ft"
-    # "bert_12", "bert_24", "elmo", "gpt2", "gpt3-babbage", "xlnet", "albert", "gpt3-ada", "roberta"
-
-    # datasets = ["rt"] # ["rt", "cr", "mpqa", "subj"]
-    # algorithms = ["roberta"]  
-    # for dataset in datasets:
-    #     for algorithm in algorithms:
-    #         print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
-    #         print(flush=True)
-    #         train_model(dataset, algorithm)
-
-    datasets_dev = ["sst2", "sst1"]  # "sst2", "sst1", "trec" 
-    algorithms_dev = ["gpt3-ada"]
-    for dataset in datasets_dev:
-        for algorithm in algorithms_dev:
+    # "bert_12", "bert_24"
+    datasets = ["subj"] # ["rt", "cr", "mpqa", "subj"]
+    algorithms = ["glove_ft"]  
+    for dataset in datasets:
+        for algorithm in algorithms:
             print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
             print(flush=True)
-            train_model_has_dev_set(dataset, algorithm)
+            train_model(dataset, algorithm)
+
+    # datasets_dev = ["sst2"]  # "sst2", "sst1", "trec" 
+    # algorithms_dev = ["bert_24"] # ["w2v_glove", "glove", "w2vMean", "bow", "tfidf"]
+    # for dataset in datasets_dev:
+    #     for algorithm in algorithms_dev:
+    #         print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
+    #         print(flush=True)
+    #         train_model_has_dev_set(dataset, algorithm)

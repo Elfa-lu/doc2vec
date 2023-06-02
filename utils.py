@@ -316,6 +316,10 @@ def add_lsa_features(revs):
     return features
 
 
+def Average(lst):
+    return sum(lst) / len(lst)
+
+    
 if __name__ == "__main__":
     revs, W, W2, word_idx_map, vocab, W_glove, word_idx_map_glove, W_ft_wiki, word_idx_map_ft_wiki, W_ft_crawl, word_idx_map_ft_crawl = load_preprocessed_data("cr")
     save_embeddings("cr", revs, W, word_idx_map, W_glove, word_idx_map_glove, W_ft_crawl, word_idx_map_ft_crawl)
