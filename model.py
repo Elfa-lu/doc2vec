@@ -50,7 +50,7 @@ def get_data(dataset="rt", algorithm="w2vMean"):
         df_feature = get_doc_vec_multi(dataset, revs, W, word_idx_map, W_ft_crawl, word_idx_map_ft_crawl)
     # lsa_feature = add_lsa_features(revs)
     # print(lsa_feature)
-    elif algorithm in ("bert_12", "bert_24", "elmo", "gpt2"):
+    elif algorithm in ("bert_12", "bert_24", "elmo", "gpt2", "gpt3-babbage", "xlnet", "albert", "gpt3-ada", "roberta"):
         df_feature = get_doc_vec_transformer_sent(dataset, algorithm)
 
     df = pd.concat([
@@ -288,17 +288,18 @@ def train_model_has_dev_set(dataset, algorithm, random_state=0, cv=10):
 if __name__ == "__main__":
     # "w2vMean", "w2vMin", "w2vMax", "bow", "tfidf", "w2v_glove", "glove", "se", "ig", 
     # "fasttext_wiki", "fasttext_crawl", "glove_w2v_ft", "glove_ft", "w2v_ft"
-    # "bert_12", "bert_24", "elmo"
-    # datasets = ["subj"] # ["rt", "cr", "mpqa", "subj"]
-    # algorithms = ["gpt2"]  
+    # "bert_12", "bert_24", "elmo", "gpt2", "gpt3-babbage", "xlnet", "albert", "gpt3-ada", "roberta"
+
+    # datasets = ["rt"] # ["rt", "cr", "mpqa", "subj"]
+    # algorithms = ["roberta"]  
     # for dataset in datasets:
     #     for algorithm in algorithms:
     #         print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
     #         print(flush=True)
     #         train_model(dataset, algorithm)
 
-    datasets_dev = ["trec"]  # "sst2", "sst1", "trec" 
-    algorithms_dev = ["elmo"]
+    datasets_dev = ["sst2", "sst1"]  # "sst2", "sst1", "trec" 
+    algorithms_dev = ["gpt3-ada"]
     for dataset in datasets_dev:
         for algorithm in algorithms_dev:
             print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
