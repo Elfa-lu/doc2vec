@@ -106,6 +106,8 @@ def train_model(dataset, algorithm, cv=10, random_state=0):
 
     rows = X.shape[0]
     results = []
+    fit_time = []
+    pred_time = []
 
     for i in range(cv):
         best_acc = 0
@@ -148,37 +150,29 @@ def train_model(dataset, algorithm, cv=10, random_state=0):
                     best_acc = acc
                     best_clf = clf
 
+        start_time_fit = time.time()
         best_clf.fit(
             X[~X.index.isin(range(rows // cv * i, rows // cv * (i + 1)))],
             y[~y.index.isin(range(rows // cv * i, rows // cv * (i + 1)))],
         )
-        acc = accuracy_score(y_test, best_clf.predict(X_test))
+        fit_time.append((time.time() - start_time_fit))
+
+        start_time_pred = time.time()
+        pred = best_clf.predict(X_test)
+        pred_time.append((time.time() - start_time_pred))
+
+        acc = accuracy_score(y_test, pred)
         print("cv: " + str(i + 1) + ", acc: " + str(acc), flush=True)
         results.append(acc)
 
+    print("avg fit time: " + "--- %s seconds ---" % (Average(fit_time)))
+    print(fit_time)
+    print("avg pred time: " + "--- %s seconds ---" % (Average(pred_time)))
+    print(pred_time)
+    print(best_clf)
+
     print("accuracy for each fold: " + str(results), flush=True)
     print("10 fold cv validation result for SVM: ", str(np.mean(results)), flush=True)
-
-    # subj average execution time
-    if dataset == "subj":
-        fit_time = []
-        for i in range(10):
-            start_time_fit = time.time()
-            best_clf.fit(
-                X[~X.index.isin(range(rows // cv * i, rows // cv * (i + 1)))],
-                y[~y.index.isin(range(rows // cv * i, rows // cv * (i + 1)))],
-            )
-            fit_time.append((time.time() - start_time_fit))
-        print("avg fit time: " + "--- %s seconds ---" % (Average(fit_time)))
-        print(fit_time)
-
-        pred_time = []
-        for i in range(10):
-            start_time_pred = time.time()
-            best_clf.predict(X_test)
-            pred_time.append((time.time() - start_time_pred))
-        print("avg pred time: " + "--- %s seconds ---" % (Average(pred_time)))
-        print(pred_time)
 
 
 def train_model_has_dev_set(dataset, algorithm, random_state=0, cv=10):
@@ -266,9 +260,9 @@ def train_model_has_dev_set(dataset, algorithm, random_state=0, cv=10):
 if __name__ == "__main__":
     # "w2vMean", "w2vMin", "w2vMax", "bow", "tfidf", "w2v_glove", "glove", "se", "ig", 
     # "fasttext_wiki", "fasttext_crawl", "glove_w2v_ft", "glove_ft", "w2v_ft"
-    # "bert_12", "bert_24"
+    # "bert_12", "bert_24", "elmo", "gpt2", "gpt3-babbage", "xlnet", "albert", "gpt3-ada", "roberta"
     datasets = ["subj"] # ["rt", "cr", "mpqa", "subj"]
-    algorithms = ["glove_ft"]  
+    algorithms = ["gpt2", "gpt3-babbage", "gpt3-ada", "xlnet", "albert", "roberta", "elmo" ]  
     for dataset in datasets:
         for algorithm in algorithms:
             print("======= training {} dataset by using {} =======".format(dataset, algorithm), flush=True)
